@@ -1,0 +1,113 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Главная{% endblock %}
+
+{% block content %}
+<!-- Hero секция -->
+<div class="hero">
+    <i class="bi bi-trophy-fill text-success" style="font-size: 4rem;"></i>
+    <h1 class="display-4 fw-bold mt-3">SKG RESERVATION</h1>
+    <p class="lead">Бронируйте лучшие места на футбольные матчи за 2 минуты</p>
+    <div class="d-flex justify-content-center gap-3 mt-4">
+        <span class="badge-custom"><i class="bi bi-check-lg me-1"></i> Быстро</span>
+        <span class="badge-custom"><i class="bi bi-check-lg me-1"></i> Удобно</span>
+        <span class="badge-custom"><i class="bi bi-check-lg me-1"></i> Надежно</span>
+    </div>
+</div>
+
+<!-- Преимущества -->
+<div class="row mb-5">
+    <div class="col-12 text-center mb-4">
+        <h2 class="fw-bold">Почему выбирают нас</h2>
+        <div class="mx-auto" style="width: 50px; height: 3px; background: linear-gradient(135deg, #28a745, #86efac);"></div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <i class="bi bi-lightning-charge text-success" style="font-size: 2.5rem;"></i>
+            <h5 class="mt-2">Мгновенно</h5>
+            <p class="small text-muted">Бронирование за секунды</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <i class="bi bi-shield-check text-success" style="font-size: 2.5rem;"></i>
+            <h5 class="mt-2">Безопасно</h5>
+            <p class="small text-muted">Ваши данные под защитой</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <i class="bi bi-headset text-success" style="font-size: 2.5rem;"></i>
+            <h5 class="mt-2">Поддержка 24/7</h5>
+            <p class="small text-muted">Всегда на связи</p>
+        </div>
+    </div>
+    <div class="col-md-3 mb-3">
+        <div class="stat-card">
+            <i class="bi bi-arrow-repeat text-success" style="font-size: 2.5rem;"></i>
+            <h5 class="mt-2">Легкая отмена</h5>
+            <p class="small text-muted">Отмена за 1 клик</p>
+        </div>
+    </div>
+</div>
+
+<!-- Ближайшие матчи -->
+{% if upcoming_matches %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <h3 class="fw-bold"><i class="bi bi-calendar-event text-success me-2"></i>Ближайшие матчи</h3>
+        <p class="text-muted">Выберите матч и забронируйте места</p>
+    </div>
+    
+    {% for match in upcoming_matches %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-trophy text-success" style="font-size: 2rem;"></i>
+                    <h5 class="card-title mt-2 fw-bold">{{ match.home_team }} vs {{ match.away_team }}</h5>
+                </div>
+                <p class="card-text">
+                    <i class="bi bi-calendar-event text-success me-1"></i> {{ match.match_date|date:"d.m.Y H:i" }}<br>
+                    <i class="bi bi-geo-alt text-success me-1"></i> {{ match.stadium.name }}<br>
+                    <i class="bi bi-tag text-success me-1"></i> <strong class="fs-5 text-success">{{ match.price }} ₽</strong>
+                </p>
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" style="width: {{ match.available_seats_count }}%;"></div>
+                </div>
+                <p class="small text-muted mb-3">🎫 Свободно: {{ match.available_seats_count }} из {{ match.stadium.total_seats }}</p>
+                <a href="{% url 'match_detail' match.id %}" class="btn btn-success w-100">
+                    <i class="bi bi-ticket-perforated me-1"></i> Выбрать места
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info text-center">
+    <i class="bi bi-info-circle me-2"></i> Пока нет запланированных матчей
+</div>
+{% endif %}
+
+<!-- Прошедшие матчи -->
+{% if past_matches %}
+<div class="row mt-5">
+    <div class="col-12 mb-3">
+        <h4 class="fw-bold"><i class="bi bi-clock-history text-secondary me-2"></i>Прошедшие матчи</h4>
+    </div>
+    {% for match in past_matches %}
+    <div class="col-md-3 mb-3">
+        <div class="card bg-light">
+            <div class="card-body text-center">
+                <i class="bi bi-trophy text-secondary mb-2" style="font-size: 1.5rem;"></i>
+                <h6 class="mb-1">{{ match.home_team }} vs {{ match.away_team }}</h6>
+                <small class="text-muted">{{ match.match_date|date:"d.m.Y" }}</small>
+                <span class="badge bg-secondary d-block mt-2">Завершён</span>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

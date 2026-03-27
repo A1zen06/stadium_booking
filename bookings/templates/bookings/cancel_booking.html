@@ -1,0 +1,30 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Отмена бронирования{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Отмена бронирования</h4>
+            </div>
+            <div class="card-body">
+                <p>Вы уверены, что хотите отменить бронирование?</p>
+                
+                <div class="alert alert-warning">
+                    <strong>{{ booking.match.home_team }} vs {{ booking.match.away_team }}</strong><br>
+                    {{ booking.match.match_date|date:"d.m.Y H:i" }}<br>
+                    Код: {{ booking.booking_code }}
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Да, отменить</button>
+                    <a href="{% url 'my_bookings' %}" class="btn btn-secondary">Нет, вернуться</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Бронирование подтверждено{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm text-center">
+            <div class="card-header bg-success text-white py-4">
+                <i class="fas fa-check-circle fa-4x mb-2"></i>
+                <h2 class="mb-0">Бронирование подтверждено!</h2>
+            </div>
+            <div class="card-body py-4">
+                <div class="bg-light rounded p-4 mb-4">
+                    <h5 class="text-muted mb-2">Ваш код бронирования</h5>
+                    <h1 class="display-4 text-success fw-bold">{{ booking.booking_code }}</h1>
+                    <button class="btn btn-sm btn-outline-success mt-2" onclick="copyCode()">
+                        <i class="fas fa-copy"></i> Скопировать код
+                    </button>
+                </div>
+                
+                <div class="row text-start mt-4">
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <h5 class="text-success"><i class="fas fa-futbol"></i> Матч</h5>
+                            <p class="mb-1"><strong>{{ booking.match.home_team }} vs {{ booking.match.away_team }}</strong></p>
+                            <p class="mb-1"><i class="far fa-calendar-alt"></i> {{ booking.match.match_date|date:"d.m.Y H:i" }}</p>
+                            <p class="mb-0"><i class="fas fa-map-marker-alt"></i> {{ booking.match.stadium.name }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <h5 class="text-success"><i class="fas fa-user"></i> Ваши данные</h5>
+                            <p class="mb-1"><strong>{{ booking.customer_name }}</strong></p>
+                            <p class="mb-1"><i class="fas fa-phone"></i> {{ booking.customer_phone }}</p>
+                            <p class="mb-0"><i class="fas fa-envelope"></i> {{ booking.customer_email|default:"не указан" }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="border rounded p-3 mb-4 text-start">
+                    <h5 class="text-success"><i class="fas fa-chair"></i> Выбранные места</h5>
+                    <div class="row">
+                        {% for seat in seats %}
+                        <div class="col-md-4 mb-2">
+                            <span class="badge bg-success p-2">Ряд {{ seat.row_number }}, Место {{ seat.seat_number }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <hr>
+                    <p class="mb-0"><strong>Общая сумма:</strong> {{ booking.total_price }} ₽</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Сохраните этот код. Покажите его при входе на стадион.
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{% url 'index' %}" class="btn btn-success">
+                        <i class="fas fa-home"></i> На главную
+                    </a>
+                    <button class="btn btn-outline-success ms-2" onclick="window.print()">
+                        <i class="fas fa-print"></i> Распечатать
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-4">
+            <div class="row">
+                <div class="col-4">
+                    <i class="fas fa-envelope text-success fa-2x"></i>
+                    <p class="small mt-1">Код отправлен на email</p>
+                </div>
+                <div class="col-4">
+                    <i class="fas fa-sms text-success fa-2x"></i>
+                    <p class="small mt-1">Код отправлен по SMS</p>
+                </div>
+                <div class="col-4">
+                    <i class="fas fa-headset text-success fa-2x"></i>
+                    <p class="small mt-1">Поддержка 24/7</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function copyCode() {
+    let code = "{{ booking.booking_code }}";
+    navigator.clipboard.writeText(code).then(function() {
+        alert('Код скопирован: ' + code);
+    });
+}
+</script>
+{% endblock %}

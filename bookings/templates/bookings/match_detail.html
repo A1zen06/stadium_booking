@@ -1,0 +1,177 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Выбор мест{% endblock %}
+
+{% block content %}
+<!-- Информация о матче -->
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <h2 class="text-success">{{ match.home_team }} vs {{ match.away_team }}</h2>
+                <p class="text-muted">
+                    <i class="bi bi-calendar-event text-success"></i> {{ match.match_date|date:"d.m.Y H:i" }}<br>
+                    <i class="bi bi-geo-alt text-success"></i> {{ match.stadium.name }}<br>
+                    <i class="bi bi-pin-map text-success"></i> {{ match.stadium.address }}
+                </p>
+            </div>
+            <div class="col-md-4">
+                <div class="bg-success bg-opacity-10 rounded p-3 text-center">
+                    <h3 class="text-success mb-0">{{ match.price }} ₽</h3>
+                    <small>цена билета</small>
+                    <hr class="my-2">
+                    <p class="mb-0">🎫 Свободно: <strong>{{ available_seats }}</strong> / {{ match.stadium.total_seats }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Схема стадиона -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0"><i class="bi bi-grid-3x3-gap-fill"></i> Схема стадиона</h5>
+        <small>Кликните на зеленое место для выбора</small>
+    </div>
+    <div class="card-body">
+        <div class="text-center mb-3">
+            <span class="badge bg-success me-2"><i class="bi bi-check-circle"></i> Свободно</span>
+            <span class="badge bg-warning me-2"><i class="bi bi-hand-index"></i> Выбрано</span>
+            <span class="badge bg-secondary"><i class="bi bi-x-circle"></i> Занято</span>
+        </div>
+        
+        <div class="stadium-map" style="overflow-x: auto;">
+            {% for row in stadium_map %}
+            <div class="d-flex justify-content-center mb-2">
+                <div class="fw-bold me-2" style="width: 50px;">Ряд {{ forloop.counter }}</div>
+                {% for seat in row %}
+                <div class="seat seat-item" 
+                     data-seat-id="{{ seat.id }}" 
+                     data-row="{{ seat.row }}" 
+                     data-number="{{ seat.number }}"
+                     data-is-booked="{{ seat.is_booked|yesno:'true,false' }}">
+                    {{ seat.number }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Форма бронирования -->
+<div class="card shadow-sm">
+    <div class="card-body">
+        <div class="alert alert-info">
+            <div class="row">
+                <div class="col-md-6">
+                    <i class="bi bi-graph-up"></i> <strong>Выбрано мест:</strong> <span id="selected-count">0</span>
+                </div>
+                <div class="col-md-6">
+                    <i class="bi bi-currency-ruble"></i> <strong>Итого:</strong> <span id="total-price">0</span> ₽
+                </div>
+            </div>
+        </div>
+
+        <div id="booking-form" style="display: none;">
+            <form method="post" action="{% url 'create_booking' match.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="selected_seats" id="selected-seats-input">
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold"><i class="bi bi-person"></i> Ваше имя</label>
+                        <input type="text" name="name" class="form-control" placeholder="Иван Иванов" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-bold"><i class="bi bi-phone"></i> Телефон</label>
+                        <input type="tel" name="phone" class="form-control phone-mask" placeholder="+7 (999) 999-99-99" required>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label fw-bold"><i class="bi bi-envelope"></i> Email (необязательно)</label>
+                        <input type="email" name="email" class="form-control" placeholder="ivan@example.com">
+                        <small class="text-muted">На email придет подтверждение бронирования</small>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-success w-100 py-2">
+                    <i class="bi bi-check-circle"></i> Забронировать
+                </button>
+            </form>
+        </div>
+        
+        <div id="no-seats-message" style="display: none;" class="text-center text-muted py-3">
+            <i class="bi bi-hand-index"></i> Выберите места на схеме стадиона
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        let price = parseFloat("{{ match.price }}");
+        let selected = [];
+
+        const seats = document.querySelectorAll('.seat-item');
+        
+        seats.forEach(function(seat) {
+            let isBooked = seat.getAttribute('data-is-booked') === 'true';
+            
+            if (isBooked) {
+                seat.style.background = '#6c757d';
+                seat.style.cursor = 'not-allowed';
+                seat.classList.add('booked');
+            } else {
+                seat.style.background = '#28a745';
+                seat.style.cursor = 'pointer';
+            }
+            
+            seat.style.width = '40px';
+            seat.style.height = '40px';
+            seat.style.margin = '3px';
+            seat.style.border = '1px solid #ccc';
+            seat.style.borderRadius = '6px';
+            seat.style.textAlign = 'center';
+            seat.style.lineHeight = '38px';
+            seat.style.fontSize = '11px';
+            seat.style.color = 'white';
+            
+            if (!isBooked) {
+                seat.addEventListener('click', function() {
+                    let id = parseInt(this.getAttribute('data-seat-id'));
+                    
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        this.style.background = '#28a745';
+                        selected = selected.filter(function(s) {
+                            return s !== id;
+                        });
+                    } else {
+                        this.classList.add('selected');
+                        this.style.background = '#ffc107';
+                        selected.push(id);
+                    }
+                    
+                    document.getElementById('selected-count').innerText = selected.length;
+                    document.getElementById('total-price').innerText = selected.length * price;
+                    document.getElementById('selected-seats-input').value = selected.join(',');
+                    
+                    if (selected.length > 0) {
+                        document.getElementById('booking-form').style.display = 'block';
+                        document.getElementById('no-seats-message').style.display = 'none';
+                    } else {
+                        document.getElementById('booking-form').style.display = 'none';
+                        document.getElementById('no-seats-message').style.display = 'block';
+                    }
+                });
+            }
+        });
+        
+        if (selected.length === 0) {
+            const noSeatsMsg = document.getElementById('no-seats-message');
+            if (noSeatsMsg) {
+                noSeatsMsg.style.display = 'block';
+            }
+        }
+    })();
+</script>
+{% endblock %}
