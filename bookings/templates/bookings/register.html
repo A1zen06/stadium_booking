@@ -5,60 +5,61 @@
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-success text-white text-center">
-                <i class="bi bi-person-plus" style="font-size: 2rem;"></i>
-                <h4 class="mb-0">Регистрация</h4>
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-success text-white text-center border-0 py-4">
+                <i class="bi bi-person-plus" style="font-size: 2.5rem;"></i>
+                <h3 class="mb-0 mt-2">Регистрация</h3>
+                <p class="mb-0 mt-2 small">Создайте аккаунт для бронирования мест</p>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <form method="post">
                     {% csrf_token %}
                     
                     <div class="mb-3">
-                        <label class="form-label">Имя пользователя</label>
-                        {{ form.username }}
+                        <label class="form-label fw-semibold">Имя пользователя</label>
+                        <input type="text" name="username" class="form-control" placeholder="Введите имя пользователя" required>
                         {% if form.username.errors %}
-                            <div class="text-danger small">{{ form.username.errors }}</div>
+                            <div class="text-danger small mt-1">{{ form.username.errors }}</div>
                         {% endif %}
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        {{ form.email }}
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control" placeholder="example@mail.com" required>
                         {% if form.email.errors %}
-                            <div class="text-danger small">{{ form.email.errors }}</div>
+                            <div class="text-danger small mt-1">{{ form.email.errors }}</div>
                         {% endif %}
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Телефон (необязательно)</label>
-                        {{ form.phone }}
+                        <label class="form-label fw-semibold">Телефон (необязательно)</label>
+                        <input type="tel" name="phone" class="form-control phone-mask" placeholder="+7 (999) 999-99-99">
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Пароль</label>
-                        {{ form.password1 }}
+                        <label class="form-label fw-semibold">Пароль</label>
+                        <input type="password" name="password1" class="form-control" placeholder="Введите пароль" required>
                         {% if form.password1.errors %}
-                            <div class="text-danger small">{{ form.password1.errors }}</div>
+                            <div class="text-danger small mt-1">{{ form.password1.errors }}</div>
                         {% endif %}
                         <div class="form-text">Пароль должен содержать не менее 8 символов</div>
                     </div>
                     
                     <div class="mb-3">
-                        <label class="form-label">Подтверждение пароля</label>
-                        {{ form.password2 }}
+                        <label class="form-label fw-semibold">Подтверждение пароля</label>
+                        <input type="password" name="password2" class="form-control" placeholder="Повторите пароль" required>
                         {% if form.password2.errors %}
-                            <div class="text-danger small">{{ form.password2.errors }}</div>
+                            <div class="text-danger small mt-1">{{ form.password2.errors }}</div>
                         {% endif %}
                     </div>
                     
-                    <button type="submit" class="btn btn-success w-100 py-2">
-                        <i class="bi bi-check-circle"></i> Зарегистрироваться
+                    <button type="submit" class="btn btn-success w-100 py-2 mt-3">
+                        <i class="bi bi-check-circle me-2"></i> Зарегистрироваться
                     </button>
                 </form>
-                <hr>
+                <hr class="my-4">
                 <p class="text-center mb-0">
-                    Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
+                    Уже есть аккаунт? <a href="{% url 'login' %}" class="text-success fw-semibold text-decoration-none">Войти</a>
                 </p>
             </div>
         </div>
