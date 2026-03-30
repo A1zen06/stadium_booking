@@ -2,9 +2,9 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
 from django.utils import timezone
 from .models import Match, Booking, Seat
-from .forms import RegisterForm
 
 def index(request):
     upcoming_matches = Match.objects.filter(
@@ -23,7 +23,7 @@ def index(request):
 
 def register(request):
     if request.method == 'POST':
-        form = RegisterForm(request.POST)
+        form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             login(request, user)
@@ -33,7 +33,7 @@ def register(request):
             for error in form.errors.values():
                 messages.error(request, error)
     else:
-        form = RegisterForm()
+        form = UserCreationForm()
     return render(request, 'bookings/register.html', {'form': form})
 
 def user_login(request):
@@ -55,40 +55,83 @@ def user_logout(request):
     return redirect('index')
 
 @login_required
-def match_detail(request, match_id):
+def select_row(request, match_id):
+    """Страница выбора ряда"""
     match = get_object_or_404(Match, id=match_id)
+    
+    # Получаем все ряды, которые есть на стадионе
+    rows = range(1, match.stadium.rows + 1)
+    
+    # Для каждого ряда считаем количество свободных мест
     booked_seats = Booking.objects.filter(
         match=match,
         status='confirmed'
     ).values_list('seats__id', flat=True)
-
-    stadium_map = []
-    for row in range(1, match.stadium.rows + 1):
-        row_seats = []
-        for seat_num in range(1, match.stadium.seats_per_row + 1):
-            seat = Seat.objects.filter(
-                stadium=match.stadium,
-                row_number=row,
-                seat_number=seat_num
-            ).first()
-            if seat:
-                row_seats.append({
-                    'id': seat.id,
-                    'row': row,
-                    'number': seat_num,
-                    'is_booked': seat.id in booked_seats,
-                    'section': seat.section
-                })
-        stadium_map.append(row_seats)
-
-    return render(request, 'bookings/match_detail.html', {
+    
+    rows_data = []
+    for row in rows:
+        # Все места в этом ряду
+        seats_in_row = Seat.objects.filter(
+            stadium=match.stadium,
+            row_number=row
+        )
+        total_in_row = seats_in_row.count()
+        booked_in_row = seats_in_row.filter(id__in=booked_seats).count()
+        free_in_row = total_in_row - booked_in_row
+        
+        rows_data.append({
+            'number': row,
+            'total': total_in_row,
+            'free': free_in_row,
+            'booked': booked_in_row
+        })
+    
+    return render(request, 'bookings/select_row.html', {
         'match': match,
-        'stadium_map': stadium_map,
-        'available_seats': match.available_seats_count,
+        'rows': rows_data,
     })
 
 @login_required
-def create_booking(request, match_id):
+def select_seats(request, match_id, row_number):
+    """Страница выбора мест в конкретном ряду"""
+    match = get_object_or_404(Match, id=match_id)
+    
+    # Проверяем, что ряд существует
+    if row_number < 1 or row_number > match.stadium.rows:
+        messages.error(request, 'Такого ряда не существует')
+        return redirect('select_row', match_id=match_id)
+    
+    # Получаем занятые места в этом ряду
+    booked_seats = Booking.objects.filter(
+        match=match,
+        status='confirmed'
+    ).values_list('seats__id', flat=True)
+    
+    # Получаем все места в выбранном ряду
+    seats = Seat.objects.filter(
+        stadium=match.stadium,
+        row_number=row_number
+    ).order_by('seat_number')
+    
+    seats_data = []
+    for seat in seats:
+        seats_data.append({
+            'id': seat.id,
+            'number': seat.seat_number,
+            'is_booked': seat.id in booked_seats,
+        })
+    
+    return render(request, 'bookings/select_seats.html', {
+        'match': match,
+        'row_number': row_number,
+        'seats': seats_data,
+        'total_seats': len(seats_data),
+        'price': match.price,
+    })
+
+@login_required
+def create_booking(request, match_id, row_number):
+    """Создание бронирования для выбранных мест в ряду"""
     match = get_object_or_404(Match, id=match_id)
     
     if request.method == 'POST':
@@ -96,11 +139,23 @@ def create_booking(request, match_id):
         phone = request.POST.get('phone')
         email = request.POST.get('email')
         seat_ids = request.POST.getlist('selected_seats')
-
+        
         if not name or not phone or not seat_ids:
-            messages.error(request, 'Заполните все поля')
-            return redirect('match_detail', match_id=match_id)
-
+            messages.error(request, 'Заполните все поля и выберите хотя бы одно место')
+            return redirect('select_seats', match_id=match_id, row_number=row_number)
+        
+        # Проверяем, что выбранные места действительно свободны
+        booked_seats = Booking.objects.filter(
+            match=match,
+            status='confirmed'
+        ).values_list('seats__id', flat=True)
+        
+        for seat_id in seat_ids:
+            if int(seat_id) in booked_seats:
+                messages.error(request, 'Некоторые выбранные места уже заняты')
+                return redirect('select_seats', match_id=match_id, row_number=row_number)
+        
+        # Создаём бронирование
         booking = Booking.objects.create(
             match=match,
             user=request.user,
@@ -115,9 +170,8 @@ def create_booking(request, match_id):
         messages.success(request, f'Бронирование создано! Код: {booking.booking_code}')
         return redirect('booking_success', booking_code=booking.booking_code)
     
-    return redirect('match_detail', match_id=match_id)
+    return redirect('select_seats', match_id=match_id, row_number=row_number)
 
-@login_required
 def booking_success(request, booking_code):
     booking = get_object_or_404(Booking, booking_code=booking_code)
     return render(request, 'bookings/booking_success.html', {

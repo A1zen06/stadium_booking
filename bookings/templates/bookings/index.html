@@ -76,7 +76,7 @@
                     <div class="progress-bar" role="progressbar" style="width: {{ match.available_seats_count }}%;"></div>
                 </div>
                 <p class="small text-muted mb-3">🎫 Свободно: {{ match.available_seats_count }} из {{ match.stadium.total_seats }}</p>
-                <a href="{% url 'match_detail' match.id %}" class="btn btn-success w-100">
+                <a href="{% url 'select_row' match.id %}" class="btn btn-success w-100">
                     <i class="bi bi-ticket-perforated me-1"></i> Выбрать места
                 </a>
             </div>
