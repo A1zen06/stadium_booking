@@ -536,6 +536,53 @@ footer .text-muted {
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
 }
+/* Выравнивание полей фильтрации */
+.row.g-3.align-items-end .col-md-2 {
+    display: flex;
+    align-items: flex-end;
+}
+
+.row.g-3.align-items-end .col-md-2 .btn {
+    margin-bottom: 0;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Текст в кнопке не переносится */
+.btn {
+    white-space: nowrap;
+}
+
+/* Для мобильных устройств кнопка может быть шире */
+@media (max-width: 768px) {
+    .btn {
+        white-space: normal;
+    }
+    .row.g-3.align-items-end .col-md-2 .btn {
+        height: auto;
+    }
+}
+
+/* Исправление цвета для SKG RESERVATION в навигации */
+.navbar-brand {
+    color: #28a745 !important;
+    font-weight: bold;
+    font-size: 1.4rem;
+}
+
+.navbar-brand i {
+    color: #28a745;
+}
+
+/* Убираем наследование от .text-success если оно мешает */
+.navbar-brand.text-success {
+    background: transparent !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+    color: #28a745 !important;
+}
 /* ========== АДАПТИВНОСТЬ ========== */
 @media (max-width: 768px) {
     .seat {

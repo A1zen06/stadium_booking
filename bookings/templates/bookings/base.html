@@ -1,81 +1,94 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SKG RESERVATION - {% block title %}Бронирование мест на стадион{% endblock %}</title>
-    
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    
+
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    
+
     <style>
         /* Прямые стили для футера */
         footer {
             background: #1a1a1a !important;
             color: white !important;
         }
-        
-        footer h5, footer p, footer li, footer .small, footer a, footer span {
+
+        footer h5,
+        footer p,
+        footer li,
+        footer .small,
+        footer a,
+        footer span {
             color: white !important;
         }
-        
+
         footer a:hover {
             color: #28a745 !important;
         }
-        
+
         footer hr {
             background-color: #28a745 !important;
         }
-        
+
         /* Навигация с blur */
         .navbar {
             background: rgba(255, 255, 255, 0.85) !important;
             backdrop-filter: blur(12px) !important;
             -webkit-backdrop-filter: blur(12px) !important;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
         }
-        
+
         /* Прижимаем футер */
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
             padding: 0;
         }
-        
+
         body {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
         }
-        
+
         main.container {
             flex: 1 0 auto;
         }
-        
+
         footer {
             flex-shrink: 0;
         }
     </style>
 </head>
+
 <body>
     <!-- Загрузчик -->
-    <div class="loader" id="loader" style="position: fixed; top:0; left:0; right:0; bottom:0; background:white; z-index:9999; display:flex; justify-content:center; align-items:center;">
-        <div class="loader-spinner" style="width:50px; height:50px; border:3px solid #e9ecef; border-top-color:#28a745; border-radius:50%; animation: spin 1s linear infinite;"></div>
+    <div class="loader" id="loader"
+        style="position: fixed; top:0; left:0; right:0; bottom:0; background:white; z-index:9999; display:flex; justify-content:center; align-items:center;">
+        <div class="loader-spinner"
+            style="width:50px; height:50px; border:3px solid #e9ecef; border-top-color:#28a745; border-radius:50%; animation: spin 1s linear infinite;">
+        </div>
     </div>
-    
+
     <style>
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 
     <nav class="navbar navbar-expand-lg navbar-light sticky-top">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}" style="font-weight: bold; background: linear-gradient(135deg, #28a745, #86efac); -webkit-background-clip: text; background-clip: text; color: transparent;">
-                <i class="bi bi-ticket-perforated me-2"></i> SKG RESERVATION
+            <a class="navbar-brand fw-bold" href="{% url 'index' %}" style="color: #ffffff;">
+                <i class="bi bi-ticket-perforated me-2">SKG RESERVATION</i>
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -99,9 +112,9 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <span class="nav-link" style="color: #28a745 !important;">
-                            <i class="bi bi-person-circle me-1"></i> {{ user.username }}
-                        </span>
+                        <a class="nav-link" href="{% url 'profile' %}" style="color: #333 !important;">
+                            <i class="bi bi-person-circle me-1"></i> Мой профиль
+                        </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'logout' %}" style="color: #333 !important;">
@@ -127,15 +140,16 @@
 
     <main class="container mt-4">
         {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %} me-2"></i>
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            <i
+                class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %} me-2"></i>
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endfor %}
         {% endif %}
-        
+
         {% block content %}{% endblock %}
     </main>
 
@@ -154,17 +168,21 @@
                         <span class="ms-2" style="color: white;">4.9 из 5</span>
                     </div>
                 </div>
-                
+
                 <div class="col-md-4 mb-4">
                     <h5 style="color: #28a745;"><i class="bi bi-info-circle me-2"></i> О нас</h5>
                     <ul class="list-unstyled">
-                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i> 5000+ болельщиков</li>
-                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i> 50+ матчей</li>
-                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i> Поддержка 24/7</li>
-                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i> Мгновенное подтверждение</li>
+                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i>
+                            5000+ болельщиков</li>
+                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i>
+                            50+ матчей</li>
+                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Поддержка 24/7</li>
+                        <li class="mb-2" style="color: white;"><i class="bi bi-check-circle-fill text-success me-2"></i>
+                            Мгновенное подтверждение</li>
                     </ul>
                 </div>
-                
+
                 <div class="col-md-4 mb-4">
                     <h5 style="color: #28a745;"><i class="bi bi-telephone me-2"></i> Контакты</h5>
                     <p style="color: white;"><i class="bi bi-phone me-2"></i> +7 (999) 123-45-67</p>
@@ -172,15 +190,16 @@
                     <p style="color: white;"><i class="bi bi-clock me-2"></i> Пн-Вс: 09:00 - 21:00</p>
                 </div>
             </div>
-            
+
             <hr style="background-color: #28a745;">
-            
+
             <div class="row">
                 <div class="col-md-6 text-center text-md-start">
                     <p class="small mb-0" style="color: white;">&copy; 2026 SKG RESERVATION. Все права защищены.</p>
                 </div>
                 <div class="col-md-6 text-center text-md-end">
-                    <p class="small mb-0" style="color: white;">Сделано с <i class="bi bi-heart-fill text-danger"></i> для футбольных болельщиков</p>
+                    <p class="small mb-0" style="color: white;">Сделано с <i class="bi bi-heart-fill text-danger"></i>
+                        для футбольных болельщиков</p>
                 </div>
             </div>
         </div>
@@ -190,15 +209,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
     <script src="{% static 'js/stadium.js' %}"></script>
-    
+
     <script>
         // Скрываем загрузчик
-        window.addEventListener('load', function() {
-            setTimeout(function() {
+        window.addEventListener('load', function () {
+            setTimeout(function () {
                 var loader = document.getElementById('loader');
-                if(loader) {
+                if (loader) {
                     loader.style.opacity = '0';
-                    setTimeout(function() {
+                    setTimeout(function () {
                         loader.style.display = 'none';
                     }, 500);
                 }
@@ -206,4 +225,5 @@
         });
     </script>
 </body>
+
 </html>

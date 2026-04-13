@@ -1,0 +1,107 @@
+{% extends 'bookings/base.html' %}
+
+{% block title %}Личный кабинет{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-success text-white text-center border-0 py-3">
+                <i class="bi bi-person-circle" style="font-size: 3rem;"></i>
+                <h4 class="mb-0 mt-2">{{ user.username }}</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <span class="badge bg-success fs-6 py-2 px-3">{{ profile.get_level_display }}</span>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="fw-semibold">Баллы:</label>
+                    <div class="progress mb-2" style="height: 25px;">
+                        {% if next_level_points > 0 %}
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {% widthratio profile.points next_level_points|add:profile.points 100 %}%">
+                            {{ profile.points }}
+                        </div>
+                        {% else %}
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%">
+                            {{ profile.points }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% if next_level_points > 0 %}
+                    <small class="text-muted">До уровня {{ next_level_name }} осталось {{ next_level_points }} баллов</small>
+                    {% else %}
+                    <small class="text-muted">Максимальный уровень достигнут</small>
+                    {% endif %}
+                </div>
+                
+                <hr>
+                
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h5 class="text-success">{{ total_bookings }}</h5>
+                        <small class="text-muted">Бронирований</small>
+                    </div>
+                    <div class="col-6">
+                        <h5 class="text-success">{{ active_bookings }}</h5>
+                        <small class="text-muted">Активных</small>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <p><strong>Потрачено всего:</strong> {{ total_spent }} ₽</p>
+                <p><strong>Телефон:</strong> {{ profile.phone|default:"не указан" }}</p>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                <p><strong>Зарегистрирован:</strong> {{ user.date_joined|date:"d.m.Y" }}</p>
+                
+                <a href="{% url 'profile_edit' %}" class="btn btn-outline-success w-100 mt-3">
+                    <i class="bi bi-pencil"></i> Редактировать профиль
+                </a>
+                <a href="{% url 'change_password' %}" class="btn btn-outline-secondary w-100 mt-2">
+                    <i class="bi bi-key"></i> Сменить пароль
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-success text-white border-0 py-3">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>История бронирований</h5>
+            </div>
+            <div class="card-body">
+                {% if bookings %}
+                    {% for booking in bookings %}
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="text-success mb-1">{{ booking.match.home_team }} vs {{ booking.match.away_team }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-calendar-event"></i> {{ booking.match.match_date|date:"d.m.Y H:i" }}<br>
+                                    <i class="bi bi-geo-alt"></i> {{ booking.match.stadium.name }}<br>
+                                    <i class="bi bi-upc-scan"></i> Код: <strong>{{ booking.booking_code }}</strong>
+                                </small>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <span class="badge {% if booking.status == 'confirmed' %}bg-success{% else %}bg-danger{% endif %} mb-2">
+                                    {{ booking.get_status_display }}
+                                </span>
+                                <p class="mb-0 small">{{ booking.total_price }} ₽</p>
+                                <a href="{% url 'booking_success' booking.booking_code %}" class="btn btn-sm btn-outline-success mt-2">Детали</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-ticket" style="font-size: 3rem; color: #cbd5e0;"></i>
+                        <p class="mt-2 text-muted">У вас пока нет бронирований</p>
+                        <a href="{% url 'index' %}" class="btn btn-success">Выбрать матч</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

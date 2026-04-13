@@ -2,26 +2,53 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.models import User
 from django.utils import timezone
-from .models import Match, Booking, Seat
-from .forms import CustomRegisterForm
+from django.db.models import Q, Sum
+from .models import Match, Booking, Seat, UserProfile, Stadium
+from .forms import CustomRegisterForm, UserProfileForm
+from decimal import Decimal
 
-
-# ==================== ГЛАВНАЯ СТРАНИЦА ====================
+# ==================== ГЛАВНАЯ СТРАНИЦА С ПОИСКОМ ====================
 def index(request):
-    upcoming_matches = Match.objects.filter(
+    matches = Match.objects.filter(
         match_date__gte=timezone.now(),
         is_active=True
     ).order_by('match_date')
+    
+    # Поиск по командам
+    search_query = request.GET.get('search', '')
+    if search_query:
+        matches = matches.filter(
+            Q(home_team__icontains=search_query) |
+            Q(away_team__icontains=search_query)
+        )
+    
+    # Фильтр по стадиону
+    stadium_filter = request.GET.get('stadium', '')
+    if stadium_filter:
+        matches = matches.filter(stadium__id=stadium_filter)
+    
+    # Фильтр по дате
+    date_filter = request.GET.get('date', '')
+    if date_filter:
+        matches = matches.filter(match_date__date=date_filter)
     
     past_matches = Match.objects.filter(
         match_date__lt=timezone.now()
     ).order_by('-match_date')[:5]
     
+    # Список стадионов для фильтра
+    stadiums = Stadium.objects.all()
+    
     return render(request, 'bookings/index.html', {
-        'upcoming_matches': upcoming_matches,
+        'upcoming_matches': matches,
         'past_matches': past_matches,
+        'stadiums': stadiums,
+        'search_query': search_query,
+        'stadium_filter': stadium_filter,
+        'date_filter': date_filter,
     })
 
 
@@ -60,6 +87,74 @@ def user_logout(request):
     logout(request)
     messages.success(request, 'Вы вышли из системы')
     return redirect('index')
+
+
+# ==================== ЛИЧНЫЙ КАБИНЕТ ====================
+@login_required
+def profile_view(request):
+    profile = request.user.profile
+    bookings = Booking.objects.filter(user=request.user).order_by('-booking_date')
+    
+    total_bookings = bookings.count()
+    total_spent = bookings.aggregate(total=Sum('total_price'))['total'] or 0
+    active_bookings = bookings.filter(status='confirmed', match__match_date__gte=timezone.now()).count()
+    
+    next_level_points = 0
+    next_level_name = ''
+    if profile.level == 'bronze':
+        next_level_points = 500 - profile.points
+        next_level_name = 'Серебряный болельщик'
+    elif profile.level == 'silver':
+        next_level_points = 2000 - profile.points
+        next_level_name = 'Золотой болельщик'
+    elif profile.level == 'gold':
+        next_level_points = 5000 - profile.points
+        next_level_name = 'Платиновый болельщик'
+    
+    context = {
+        'profile': profile,
+        'bookings': bookings,
+        'total_bookings': total_bookings,
+        'total_spent': total_spent,
+        'active_bookings': active_bookings,
+        'next_level_points': next_level_points,
+        'next_level_name': next_level_name,
+    }
+    return render(request, 'bookings/profile.html', context)
+
+
+@login_required
+def profile_edit(request):
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, request.FILES, instance=request.user.profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Профиль успешно обновлён!')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Исправьте ошибки в форме')
+    else:
+        form = UserProfileForm(instance=request.user.profile)
+    
+    return render(request, 'bookings/profile_edit.html', {'form': form})
+
+
+@login_required
+def change_password(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Пароль успешно изменён!')
+            return redirect('profile')
+        else:
+            for error in form.errors.values():
+                messages.error(request, error)
+    else:
+        form = PasswordChangeForm(request.user)
+    
+    return render(request, 'bookings/change_password.html', {'form': form})
 
 
 # ==================== ВЫБОР РЯДА И МЕСТ ====================
@@ -140,21 +235,32 @@ def create_booking(request, match_id, row_number):
         name = request.POST.get('name')
         phone = request.POST.get('phone')
         email = request.POST.get('email')
-        seat_ids = request.POST.getlist('selected_seats')
+        
+        # Исправлено: получаем строку с ID и разбиваем на список
+        selected_seats_raw = request.POST.get('selected_seats', '')
+        if selected_seats_raw:
+            seat_ids = selected_seats_raw.split(',')
+        else:
+            seat_ids = []
         
         if not name or not phone or not seat_ids:
             messages.error(request, 'Заполните все поля и выберите хотя бы одно место')
             return redirect('select_seats', match_id=match_id, row_number=row_number)
         
+        # Получаем список занятых мест
         booked_seats = Booking.objects.filter(
             match=match,
             status='confirmed'
         ).values_list('seats__id', flat=True)
         
+        # Проверяем каждое место
         for seat_id in seat_ids:
             if int(seat_id) in booked_seats:
                 messages.error(request, 'Некоторые выбранные места уже заняты')
                 return redirect('select_seats', match_id=match_id, row_number=row_number)
+        
+        from decimal import Decimal
+        total_price = len(seat_ids) * Decimal(str(match.price))
         
         booking = Booking.objects.create(
             match=match,
@@ -162,12 +268,19 @@ def create_booking(request, match_id, row_number):
             customer_name=name,
             customer_phone=phone,
             customer_email=email,
-            total_price=len(seat_ids) * float(match.price),
+            total_price=total_price,
             status='confirmed'
         )
         booking.seats.set(Seat.objects.filter(id__in=seat_ids))
         
-        messages.success(request, f'Бронирование создано! Код: {booking.booking_code}')
+        points_earned = int(total_price / 10)
+        profile = request.user.profile
+        profile.add_points(points_earned)
+        profile.total_bookings += 1
+        profile.total_spent += Decimal(str(total_price))
+        profile.save()
+        
+        messages.success(request, f'Бронирование создано! Начислено {points_earned} баллов. Код: {booking.booking_code}')
         return redirect('booking_success', booking_code=booking.booking_code)
     
     return redirect('select_seats', match_id=match_id, row_number=row_number)

@@ -37,8 +37,8 @@
                         <i class="bi bi-easel fs-1 text-success"></i>
                         <h4 class="mt-2 mb-1">Ряд {{ row.number }}</h4>
                         <p class="small mb-0">
-                            <span class="text-success">🟢 Свободно: {{ row.free }}</span><br>
-                            <span class="text-secondary">⚪ Всего: {{ row.total }}</span>
+                            <span class="text-success">Свободно: {{ row.free }}</span><br>
+                            <span class="text-secondary">Всего: {{ row.total }}</span>
                         </p>
                         {% if row.free == 0 %}
                         <span class="badge bg-danger mt-2">Полностью занят</span>

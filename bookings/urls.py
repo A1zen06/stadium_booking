@@ -7,6 +7,11 @@ urlpatterns = [
     path('login/', views.user_login, name='login'),
     path('logout/', views.user_logout, name='logout'),
     
+    # Личный кабинет
+    path('profile/', views.profile_view, name='profile'),
+    path('profile/edit/', views.profile_edit, name='profile_edit'),
+    path('profile/change-password/', views.change_password, name='change_password'),
+    
     # Выбор ряда и мест
     path('match/<int:match_id>/select-row/', views.select_row, name='select_row'),
     path('match/<int:match_id>/row/<int:row_number>/seats/', views.select_seats, name='select_seats'),

@@ -1,10 +1,9 @@
 from django.contrib import admin
-from .models import Stadium, Match, Seat, Booking
+from .models import Stadium, Match, Seat, Booking, UserProfile
 
 @admin.register(Stadium)
 class StadiumAdmin(admin.ModelAdmin):
     list_display = ['name', 'address', 'total_seats']
-    search_fields = ['name']
 
 @admin.register(Match)
 class MatchAdmin(admin.ModelAdmin):
@@ -19,7 +18,12 @@ class SeatAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ['booking_code', 'customer_name', 'customer_phone', 'match', 'total_price', 'status', 'booking_date']
+    list_display = ['booking_code', 'customer_name', 'match', 'total_price', 'status', 'booking_date']
     list_filter = ['status', 'booking_date']
-    search_fields = ['booking_code', 'customer_name', 'customer_phone']
-    filter_horizontal = ['seats']
+    search_fields = ['booking_code', 'customer_name']
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'level', 'points', 'total_bookings', 'total_spent']
+    list_filter = ['level']
+    search_fields = ['user__username']
